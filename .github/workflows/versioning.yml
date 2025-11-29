@@ -34,7 +34,10 @@ jobs:
           echo "New version is $NEW_VERSION"
 
       - name: Commit and push changes
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:$GITHUB_TOKEN@github.com/${{ github.repository }}
+          git add version.txt
+          git commit -m "Increment version to $NEW_VERSION" || echo "No changes to commit"
+          git push origin main
