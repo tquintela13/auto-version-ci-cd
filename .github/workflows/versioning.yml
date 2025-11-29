@@ -19,6 +19,7 @@ jobs:
           git config --global user.email "ci-bot@example.com"
 
       - name: Increment version
+        id: increment
         run: |
           # Ler a versão atual
           VERSION=$(cat version.txt)
@@ -32,10 +33,12 @@ jobs:
           NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
           echo $NEW_VERSION > version.txt
           echo "New version is $NEW_VERSION"
+          # Definir output para usar no commit
+          echo "::set-output name=new_version::$NEW_VERSION"
 
       - name: Commit and push changes
         uses: devops-infra/action-commit-push@v1.0.3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }} # Usa o token padrão do GitHub (não requer PAT)
-          commit_message: "Increment version to ${{ steps.increment-version-step.outputs.new_version }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          commit_message: "Increment version to ${{ steps.increment.outputs.new_version }}"
           branch: main
