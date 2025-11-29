@@ -33,10 +33,8 @@ jobs:
           echo $NEW_VERSION > version.txt
           echo "New version is $NEW_VERSION"
 
-      - name: Commit and push new version
-        env:
-          GITHUB_PAT: ${{ secrets.PAT }}
-        run: |
-          git add version.txt
-          git commit -m "Increment version to $NEW_VERSION" || echo "No changes to commit"
-          git push https://$GITHUB_PAT@github.com/${{ github.repository }} main
+      - name: Commit and push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
