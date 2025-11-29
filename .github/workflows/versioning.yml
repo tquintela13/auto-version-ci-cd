@@ -1,0 +1,38 @@
+name: Auto Versioning
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  versioning:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Read current version
+        id: read_version
+        run: echo "version=$(cat version.txt)" >> $GITHUB_OUTPUT
+
+      - name: Increment version
+        id: increment
+        run: |
+          version=${{ steps.read_version.outputs.version }}
+          prefix="v"
+          version_number=${version#$prefix}
+          IFS='.' read -r major minor patch <<< "$version_number"
+          patch=$((patch + 1))
+          new_version="$prefix$major.$minor.$patch"
+          echo "$new_version" > version.txt
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Commit updated version
+        run: |
+          git config user.name "CI Bot"
+          git config user.email "ci-bot@example.com"
+          git add version.txt
+          git commit -m "Increment version to ${{ steps.increment.outputs.new_version }}"
+          git push
