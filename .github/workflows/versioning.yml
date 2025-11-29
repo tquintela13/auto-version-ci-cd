@@ -1,4 +1,4 @@
-name: Auto Versioning
+name: Versioning Automation
 
 on:
   push:
@@ -6,33 +6,38 @@ on:
       - main
 
 jobs:
-  versioning:
+  increment-version:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Set up Git
+        run: |
+          git config --global user.name "CI Bot"
+          git config --global user.email "ci-bot@example.com"
+
       - name: Read current version
-        id: read_version
-        run: echo "version=$(cat version.txt)" >> $GITHUB_OUTPUT
+        id: get_version
+        run: |
+          VERSION=$(cat version.txt)
+          echo "current_version=$VERSION" >> $GITHUB_ENV
 
       - name: Increment version
         id: increment
         run: |
-          version=${{ steps.read_version.outputs.version }}
-          prefix="v"
-          version_number=${version#$prefix}
-          IFS='.' read -r major minor patch <<< "$version_number"
-          patch=$((patch + 1))
-          new_version="$prefix$major.$minor.$patch"
-          echo "$new_version" > version.txt
-          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+          IFS='.' read -r -a parts <<< "${{ env.current_version#v }}"
+          last_index=$((${#parts[@]} - 1))
+          parts[$last_index]=$((parts[$last_index]+1))
+          NEW_VERSION="v${parts[0]}.${parts[1]}.${parts[2]}"
+          echo $NEW_VERSION > version.txt
+          echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
 
-      - name: Commit updated version
+      - name: Commit and push new version
+        env:
+          PAT: ${{ secrets.PAT }}
         run: |
-          git config user.name "CI Bot"
-          git config user.email "ci-bot@example.com"
           git add version.txt
-          git commit -m "Increment version to ${{ steps.increment.outputs.new_version }}"
-          git push
+          git commit -m "Increment version to ${{ env.new_version }}" || echo "No changes to commit"
+          git push https://$PAT@github.com/${{ github.repository }} main
