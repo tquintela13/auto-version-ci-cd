@@ -19,20 +19,25 @@ jobs:
           git config --global user.email "ci-bot@example.com"
 
       - name: Increment version
-        id: increment
+        id: increment-version-step
         run: |
+          # Ler a versão atual
           VERSION=$(cat version.txt)
+          # Remover o 'v' inicial
           VERSION_NUMBER=${VERSION#v}
+          # Separar em partes
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NUMBER"
+          # Incrementar o patch
           PATCH=$((PATCH + 1))
+          # Criar nova versão
           NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
           echo $NEW_VERSION > version.txt
           echo "New version is $NEW_VERSION"
-          echo "::set-output name=new_version::$NEW_VERSION"
+          # Exportar a nova versão para steps seguintes
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Commit and push changes
         uses: devops-infra/action-commit-push@v1.0.3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          commit_message: "Increment version to ${{ steps.increment.outputs.new_version }}"
-          branch: main
+          github_token: ${{ secrets.PAT }}   # Aqui usamos o PAT com repo + workflow permissions
+          commit_message: "Increment version to ${{ steps.increment-version-step.outputs.new_version }}"
