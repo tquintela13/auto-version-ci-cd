@@ -35,8 +35,8 @@ jobs:
 
       - name: Commit and push new version
         env:
-          PAT: ${{ secrets.PAT }}
+          GITHUB_PAT: ${{ secrets.PAT }}
         run: |
           git add version.txt
           git commit -m "Increment version to $NEW_VERSION" || echo "No changes to commit"
-          git push https://$PAT@github.com/${{ github.repository }} main
+          git push https://$GITHUB_PAT@github.com/${{ github.repository }} main
